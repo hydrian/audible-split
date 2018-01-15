@@ -51,6 +51,10 @@ while [[ $# -gt 0 ]] ; do
       COVER_FILE="${2}"
       shift
     ;;
+    --help)
+      display_help
+      exit 0
+    ;;
     --)
       FILES="$1"
       break

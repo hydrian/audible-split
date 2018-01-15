@@ -1,7 +1,7 @@
 #!/bin/bash
 APP_NAME="$(basename $0)"
 
-DEFAULT_GAP="1.5"
+DEFAULT_GAP="2.5"
 DEFAULT_OUTPUT_DIR="${HOME}/Music"
 
 function display_help  {
@@ -9,11 +9,12 @@ function display_help  {
   echo '  --artist-tag <STRING>       Author name'
   echo '  --album-tag  <STRING>       Book name'
   echo '  --cover-file <STRING>       Location of image file for the cover art (optional)'
+  echo '  --help                      Displays this help message
   echo '  --output-dir <FILE>         Location of base directory for outputted files (default: ~/Music)'
-  echo "  --pretend                   Does not generated final output files"
-  echo "  --silence-gap <FLOAT>       Number of seconds of silence that sections will split on"
-  echo "  --track-title-tag <STRING>  Alternate name for the title for each track (default: --album-tag value)"
-  echo "  --year-tag <INTEGER>        Release year"
+  echo '  --pretend                   Does not generated final output files'
+  echo "  --silence-gap <FLOAT>       Number of seconds of silence that sections will split on (default: ${DEFAULT_GAP} seconds)"
+  echo '  --track-title-tag <STRING>  Alternate name for the title for each track (default: --album-tag value)'
+  echo '  --year-tag <INTEGER>        Release year (optional)'
   return 0
 }
 

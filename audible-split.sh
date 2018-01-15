@@ -1,5 +1,4 @@
 #!/bin/bash
-###mp3splt -s -p 'th=32,min=2.75'  -g "[@N=1,@a=C.S. Lewis,@b=The Space Trilogy - Book 2 - Perelandra,@t=Perelandra,@g=audiobook,@y=1944]" -T 12 Perelandra.mp3
 APP_NAME="$(basename $0)"
 
 DEFAULT_GAP="1.5"

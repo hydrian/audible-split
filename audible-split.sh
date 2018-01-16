@@ -1,9 +1,15 @@
 #!/bin/bash -x
 APP_NAME="$(basename $0)"
-
+################
+### DEFAULTS ###
+################
 DEFAULT_GAP="2.5"
 DEFAULT_OUTPUT_DIR="${HOME}/Music"
 DEFAULT_PRETEND=false
+
+#################
+### Arguments ###
+#################
 
 function display_help  {
   echo "SYNTAX: ${APP_NAME} OPTIONS FILE/DIR"
@@ -70,12 +76,19 @@ while [[ $# -gt 0 ]] ; do
   shift
 done
 
-
+#########################
+### Applying Defaults ###
+#########################
 
 GAP="${GAP:-$DEFAULT_GAP}"
 OUTPUT_DIR="${OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
 PRETEND=${PRETEND:-$DEFAULT_PRETEND}
 
+#########################
+### Merging MP3 files ###
+#########################
+
+### Processing single file or directory
 if [ -d "${FILES}" ] ; then
   TMP_MP3_FILE=$(mktemp --suffix='audible-split')
   TMP_MP3WRAP_FILE="${TMP_MP3_FILE}_MP3WRAP.mp3"
@@ -93,6 +106,10 @@ else
   echo "Failed to filed valid file or directory ${FILES}" 1>&2
   exit 2
 fi
+
+#######################
+### Setting up tags ###
+#######################
 
 if [ -z "${TAG_TRACK_TITLE}" ] ; then
   TAG_TRACK_TITLE="${TAG_ALBUM_TITLE}"
@@ -114,6 +131,9 @@ if $PRETEND ; then
   PRETEND_OPT=' -P'
 fi
 
+###########################
+### Spliting on silence ###
+###########################
 mp3splt ${PRETEND_OPTd} -d "${OUTPUT_DIR}" -T 12 -s -p "min=${GAP}" -g "${TAG_OPT}" -m "${TAG_ALBUM_TITLE}.m3u" -o '@a/@b/@N-@t' ${FILES}
 if [ $? -ne 0 ] ; then
   echo "Failed to split mp3 files." 1>&2
@@ -126,12 +146,18 @@ fi
 
 $PRETEND && exit 0
 
+###########################
+### Applying extra tags ###
+###########################
+
 EYED3_TAG_OPTS=''
 
+### Release year
 if [ ! -z "${TAG_YEAR}" ] ; then
   EYED3_TAG_OPTS+=" --year=${TAG_YEAR}"
 fi
 
+### Cover Art
 if [ -f "${COVER_FILE}" ] ; then
   COVER_FILE_SHORTNAME=$(basename "${COVER_FILE}")
   COVER_FILE_EXT="${COVER_FILE_SHORTNAME##*.}"
@@ -142,10 +168,12 @@ if [ -f "${COVER_FILE}" ] ; then
   EYED3_TAG_OPTS+=" --add-image ${LOCAL_COVER_FILE}:FRONT_COVER:''"
 fi
 
+### Executing tag command
+
 if [ ! -z "${EYED3_TAG_OPTS}" ] ; then
   eyeD3 ${EYED3_TAG_OPTS} *.mp3
   if [ $? -ne 0 ] ; then
-    echo "Failed to insert cover art" 1>&2
+    echo "Failed to apply eye3D tags" 1>&2
     exit 2
   fi
 fi

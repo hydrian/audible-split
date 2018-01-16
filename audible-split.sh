@@ -1,15 +1,16 @@
-#!/bin/bash
+#!/bin/bash -x
 APP_NAME="$(basename $0)"
 
 DEFAULT_GAP="2.5"
 DEFAULT_OUTPUT_DIR="${HOME}/Music"
+DEFAULT_PRETEND=false
 
 function display_help  {
   echo "SYNTAX: ${APP_NAME} OPTIONS FILE/DIR"
   echo '  --artist-tag <STRING>       Author name'
   echo '  --album-tag  <STRING>       Book name'
   echo '  --cover-file <STRING>       Location of image file for the cover art (optional)'
-  echo '  --help                      Displays this help message
+  echo '  --help                      Displays this help message'
   echo '  --output-dir <FILE>         Location of base directory for outputted files (default: ~/Music)'
   echo '  --pretend                   Does not generated final output files'
   echo "  --silence-gap <FLOAT>       Number of seconds of silence that sections will split on (default: ${DEFAULT_GAP} seconds)"
@@ -73,6 +74,7 @@ done
 
 GAP="${GAP:-$DEFAULT_GAP}"
 OUTPUT_DIR="${OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
+PRETEND=${PRETEND:-$DEFAULT_PRETEND}
 
 if [ -d "${FILES}" ] ; then
   TMP_MP3_FILE=$(mktemp --suffix='audible-split')
@@ -108,11 +110,11 @@ fi
 
 TAG_OPT+=",@t=${TAG_TRACK_TITLE}]"
 
-if $PRETEND ; thennaiteve
+if $PRETEND ; then
   PRETEND_OPT=' -P'
 fi
 
-mp3splt ${PRETEND_OPT} -d "${OUTPUT_DIR}" -T 12 -s -p "min=${GAP}" -g "${TAG_OPT}" -m "${TAG_ALBUM_TITLE}.m3u" -o '@a/@b/@N-@t' ${FILES}
+mp3splt ${PRETEND_OPTd} -d "${OUTPUT_DIR}" -T 12 -s -p "min=${GAP}" -g "${TAG_OPT}" -m "${TAG_ALBUM_TITLE}.m3u" -o '@a/@b/@N-@t' ${FILES}
 if [ $? -ne 0 ] ; then
   echo "Failed to split mp3 files." 1>&2
   exit 2
@@ -122,9 +124,7 @@ if [ -f "${TMP_MP3WRAP_FILE}" ] ; then
   rm "${TMP_MP3WRAP_FILE}"
 fi
 
-if $PRETEND ; then
-  exit 0
-fi
+$PRETEND && exit 0
 
 EYED3_TAG_OPTS=''
 
@@ -137,6 +137,7 @@ if [ -f "${COVER_FILE}" ] ; then
   COVER_FILE_EXT="${COVER_FILE_SHORTNAME##*.}"
   LOCAL_COVER_FILE="cover.${COVER_FILE_EXT}"
   pushd "${OUTPUT_DIR}/${TAG_ARTIST}/${TAG_ALBUM_TITLE}/"
+  
   cp "${COVER_FILE}" "${LOCAL_COVER_FILE}"
   EYED3_TAG_OPTS+=" --add-image ${LOCAL_COVER_FILE}:FRONT_COVER:''"
 fi

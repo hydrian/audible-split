@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 APP_NAME="$(basename $0)"
 ################
 ### DEFAULTS ###

@@ -84,6 +84,21 @@ GAP="${GAP:-$DEFAULT_GAP}"
 OUTPUT_DIR="${OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
 PRETEND=${PRETEND:-$DEFAULT_PRETEND}
 
+###########################
+### Required Paramaters ###
+###########################
+if [ -z "${TAG_ARTIST}" ] ; then
+	echo "--artist-tag is a required option" 1>&2
+	display_help 1>&2
+	exit 2
+fi
+
+if [ -z "${TAG_ALBUM}" ] ; then
+	echo "--album-tag is a required option" 1>&2
+	display_help 1>&2
+	exit 2
+fi
+
 #########################
 ### Merging MP3 files ###
 #########################

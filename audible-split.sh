@@ -93,7 +93,7 @@ if [ -z "${TAG_ARTIST}" ] ; then
 	exit 2
 fi
 
-if [ -z "${TAG_ALBUM}" ] ; then
+if [ -z "${TAG_ALBUM_TITLE}" ] ; then
 	echo "--album-tag is a required option" 1>&2
 	display_help 1>&2
 	exit 2
@@ -146,10 +146,12 @@ if $PRETEND ; then
   PRETEND_OPT=' -P'
 fi
 
+SILENCE_PARAMETERS="off=.5,min=${GAP}"
+
 ###########################
 ### Spliting on silence ###
 ###########################
-mp3splt ${PRETEND_OPTd} -d "${OUTPUT_DIR}" -T 12 -s -p "min=${GAP}" -g "${TAG_OPT}" -m "${TAG_ALBUM_TITLE}.m3u" -o '@a/@b/@N-@t' ${FILES}
+mp3splt ${PRETEND_OPTd} -d "${OUTPUT_DIR}" -T 12 -s -p "${SILENCE_PARAMETERS}" -g "${TAG_OPT}" -m "${TAG_ALBUM_TITLE}.m3u" -o '@a/@b/@N-@t' ${FILES}
 if [ $? -ne 0 ] ; then
   echo "Failed to split mp3 files." 1>&2
   exit 2

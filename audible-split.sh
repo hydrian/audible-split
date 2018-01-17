@@ -99,6 +99,15 @@ if [ -z "${TAG_ALBUM_TITLE}" ] ; then
 	exit 2
 fi
 
+if [ ! -z "${COVER_FILE}" ] ; then
+	if [ -f "${COVER_FILE}" ] ; then
+		COVER_FILE=$(realpath "${COVER_FILE}")
+	else
+		echo "Could not find ${COVER_FILE}"
+		exit 2
+	fi
+fi
+
 #########################
 ### Merging MP3 files ###
 #########################
@@ -151,7 +160,7 @@ SILENCE_PARAMETERS="off=.5,min=${GAP}"
 ###########################
 ### Spliting on silence ###
 ###########################
-mp3splt ${PRETEND_OPTd} -d "${OUTPUT_DIR}" -T 12 -s -p "${SILENCE_PARAMETERS}" -g "${TAG_OPT}" -m "${TAG_ALBUM_TITLE}.m3u" -o '@a/@b/@N-@t' ${FILES}
+mp3splt ${PRETEND_OPT} -T 12 -s -p "${SILENCE_PARAMETERS}" -g "${TAG_OPT}" -m "${TAG_ALBUM_TITLE}.m3u" -o "${OUTPUT_DIR}/@a/@b/@N-@t" ${FILES}
 if [ $? -ne 0 ] ; then
   echo "Failed to split mp3 files." 1>&2
   exit 2
@@ -180,8 +189,11 @@ if [ -f "${COVER_FILE}" ] ; then
   COVER_FILE_EXT="${COVER_FILE_SHORTNAME##*.}"
   LOCAL_COVER_FILE="cover.${COVER_FILE_EXT}"
   pushd "${OUTPUT_DIR}/${TAG_ARTIST}/${TAG_ALBUM_TITLE}/"
-  
   cp "${COVER_FILE}" "${LOCAL_COVER_FILE}"
+  if [ $? -ne 0 ] ; then
+  	echo "Failed to copy into cover file into output directory"
+  	exit 2
+  fi
   EYED3_TAG_OPTS+=" --add-image ${LOCAL_COVER_FILE}:FRONT_COVER:''"
 fi
 

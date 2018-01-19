@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 APP_NAME="$(basename $0)"
 ################
 ### DEFAULTS ###
@@ -121,8 +121,9 @@ fi
 #########################
 
 ### Processing single file or directory
+FILES="$(realpath "${FILES}")"
 if [ -d "${FILES}" ] ; then
-  TMP_MP3_FILE=$(mktemp --suffix='audible-split' ${TMP_DIR_OPT})
+  TMP_MP3_FILE=$(mktemp -u --suffix='audible-split' ${TMP_DIR_OPT})
   TMP_MP3WRAP_FILE="${TMP_MP3_FILE}_MP3WRAP.mp3"
   mp3wrap "${TMP_MP3_FILE}" "${FILES}"/*.mp3
   if [ $? -ne 0 ] ; then
@@ -173,7 +174,7 @@ TMP_WORK_FULL_DIR="${TMP_WORK_DIR}/${TAG_ARTIST}/${TAG_ALBUM_TITLE}"
 OUTPUT_FULL_DIR="${OUTPUT_DIR}/${TAG_ARTIST}/${TAG_ALBUM_TITLE}"
 
 pushd "${TMP_WORK_DIR}" 1>/dev/null
-mp3splt ${PRETEND_OPT} -T 12 -s -p "${SILENCE_PARAMETERS}" -g "${TAG_OPT}" -d "${TMP_WORK_DIR}" -m "${TAG_ALBUM_TITLE}.m3u" -o "@a/@b/@N-@t" ${FILES}
+mp3splt ${PRETEND_OPT} -N -T 12 -s -p "${SILENCE_PARAMETERS}" -g "${TAG_OPT}" -d "${TMP_WORK_DIR}" -m "${TAG_ALBUM_TITLE}.m3u" -o "@a/@b/@N-@t" ${FILES}
 if [ $? -ne 0 ] ; then
   echo "Failed to split mp3 files." 1>&2
   exit 2
@@ -230,13 +231,14 @@ popd 1>/dev/null
 
 pushd "${TMP_WORK_DIR}" 1>/dev/null
 cp -R * "${OUTPUT_DIR}"
-if [ $? -ne 0 ] ; then
+if [ $? -eq 0 ] ; then
 	rm -Rf "${TMP_WORK_DIR}" ||	echo "Failed to remove working directory ${TMP_WORK_DIR}" 1>&2
+	true
 else
 	echo "Failed to copy files from work to ${OUTPUT_DIR}" 1>&2
 	exit 2
 fi
 
-popd 1>/dev/null
+# popd 1>/dev/null
 
 exit 0

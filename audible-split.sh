@@ -7,6 +7,7 @@ DEFAULT_GAP="2.5"
 DEFAULT_OUTPUT_DIR="${HOME}/Music"
 DEFAULT_PRETEND=false
 
+
 #################
 ### Arguments ###
 #################
@@ -59,6 +60,10 @@ while [[ $# -gt 0 ]] ; do
       COVER_FILE="${2}"
       shift
     ;;
+	--tmp-dir)
+	  TMP_DIR="${2}"
+	  shift
+	;;
     --help)
       display_help
       exit 0
@@ -83,6 +88,9 @@ done
 GAP="${GAP:-$DEFAULT_GAP}"
 OUTPUT_DIR="${OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
 PRETEND=${PRETEND:-$DEFAULT_PRETEND}
+if [ ! -z "${TMP_DIR}" ] ; then
+	TMP_DIR_OPT=" --tmpdir=${TMP_DIR}"
+fi
 
 ###########################
 ### Required Paramaters ###
@@ -114,7 +122,7 @@ fi
 
 ### Processing single file or directory
 if [ -d "${FILES}" ] ; then
-  TMP_MP3_FILE=$(mktemp --suffix='audible-split')
+  TMP_MP3_FILE=$(mktemp --suffix='audible-split' ${TMP_DIR_OPT})
   TMP_MP3WRAP_FILE="${TMP_MP3_FILE}_MP3WRAP.mp3"
   mp3wrap "${TMP_MP3_FILE}" "${FILES}"/*.mp3
   if [ $? -ne 0 ] ; then
@@ -160,7 +168,12 @@ SILENCE_PARAMETERS="off=.5,min=${GAP}"
 ###########################
 ### Spliting on silence ###
 ###########################
-mp3splt ${PRETEND_OPT} -T 12 -s -p "${SILENCE_PARAMETERS}" -g "${TAG_OPT}" -m "${TAG_ALBUM_TITLE}.m3u" -o "${OUTPUT_DIR}/@a/@b/@N-@t" ${FILES}
+TMP_WORK_DIR=$(mktemp --suffix='audible-split' -d ${TMP_DIR_OPT})
+TMP_WORK_FULL_DIR="${TMP_WORK_DIR}/${TAG_ARTIST}/${TAG_ALBUM_TITLE}"
+OUTPUT_FULL_DIR="${OUTPUT_DIR}/${TAG_ARTIST}/${TAG_ALBUM_TITLE}"
+
+pushd "${TMP_WORK_DIR}" 1>/dev/null
+mp3splt ${PRETEND_OPT} -T 12 -s -p "${SILENCE_PARAMETERS}" -g "${TAG_OPT}" -d "${TMP_WORK_DIR}" -m "${TAG_ALBUM_TITLE}.m3u" -o "@a/@b/@N-@t" ${FILES}
 if [ $? -ne 0 ] ; then
   echo "Failed to split mp3 files." 1>&2
   exit 2
@@ -172,10 +185,13 @@ fi
 
 $PRETEND && exit 0
 
+find "${TMP_WORK_DIR}" -iname \*\.m3u -exec mv {} "${TMP_WORK_FULL_DIR}" \;   
+find "${TMP_WORK_DIR}" -iname mp3splt.m3u -exec mv {} "${TMP_WORK_FULL_DIR}" \;
+
 ###########################
 ### Applying extra tags ###
 ###########################
-
+pushd "${TMP_WORK_FULL_DIR}"
 EYED3_TAG_OPTS=''
 
 ### Release year
@@ -188,7 +204,7 @@ if [ -f "${COVER_FILE}" ] ; then
   COVER_FILE_SHORTNAME=$(basename "${COVER_FILE}")
   COVER_FILE_EXT="${COVER_FILE_SHORTNAME##*.}"
   LOCAL_COVER_FILE="cover.${COVER_FILE_EXT}"
-  pushd "${OUTPUT_DIR}/${TAG_ARTIST}/${TAG_ALBUM_TITLE}/"
+
   cp "${COVER_FILE}" "${LOCAL_COVER_FILE}"
   if [ $? -ne 0 ] ; then
   	echo "Failed to copy into cover file into output directory"
@@ -206,5 +222,21 @@ if [ ! -z "${EYED3_TAG_OPTS}" ] ; then
     exit 2
   fi
 fi
+popd 1>/dev/null
 
-exit $?
+#############################
+### Moving to $OUTPUT_DIR ###
+#############################
+
+pushd "${TMP_WORK_DIR}" 1>/dev/null
+cp -R * "${OUTPUT_DIR}"
+if [ $? -ne 0 ] ; then
+	rm -Rf "${TMP_WORK_DIR}" ||	echo "Failed to remove working directory ${TMP_WORK_DIR}" 1>&2
+else
+	echo "Failed to copy files from work to ${OUTPUT_DIR}" 1>&2
+	exit 2
+fi
+
+popd 1>/dev/null
+
+exit 0

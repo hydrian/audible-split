@@ -1,12 +1,12 @@
-#!/bin/bash 
+#!/bin/bash -x
 APP_NAME="$(basename $0)"
 ################
 ### DEFAULTS ###
 ################
-DEFAULT_GAP="2.5"
+DEFAULT_GAP='2.5'
 DEFAULT_OUTPUT_DIR="${HOME}/Music"
 DEFAULT_PRETEND=false
-
+DEFAULT_THRESHOLD='-48'
 
 #################
 ### Arguments ###
@@ -21,7 +21,8 @@ function display_help  {
   echo "  --output-dir <FILE>         Location of base directory for outputted files (default: ${DEFAULT_OUTPUT_DIR} )"
   echo '  --pretend                   Does not generated final output files'
   echo "  --silence-gap <FLOAT>       Number of seconds of silence that sections will split on (default: ${DEFAULT_GAP} seconds)"
-  echo '  --tmp-dir <DIR>             Where to create tmp files. Uses mktemp\'s default'
+  echo "  --threshold <FLOAT>         Audio threshold that is considered silence (default: ${DEFAULT_THRESHOLD})"
+  echo '  --tmp-dir <DIR>             Where to create tmp files. Uses mktemp default'
   echo '  --track-title-tag <STRING>  Alternate name for the title for each track (default: --album-tag value)'
   echo '  --year-tag <INTEGER>        Release year (optional)'
   return 0
@@ -61,6 +62,10 @@ while [[ $# -gt 0 ]] ; do
       COVER_FILE="${2}"
       shift
     ;;
+    --threshold)
+      THRESHOLD="${2}"
+      shift
+    ;;
 	--tmp-dir)
 	  TMP_DIR="${2}"
 	  shift
@@ -89,6 +94,7 @@ done
 GAP="${GAP:-$DEFAULT_GAP}"
 OUTPUT_DIR="${OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
 PRETEND=${PRETEND:-$DEFAULT_PRETEND}
+THRESHOLD=${THRESHOLD:-$DEFAULT_THRESHOLD}
 if [ ! -z "${TMP_DIR}" ] ; then
 	TMP_DIR_OPT=" --tmpdir=${TMP_DIR}"
 fi
@@ -165,7 +171,7 @@ if $PRETEND ; then
   PRETEND_OPT=' -P'
 fi
 
-SILENCE_PARAMETERS="off=.5,min=${GAP}"
+SILENCE_PARAMETERS="off=.5,min=${GAP},th=${THRESHOLD}"
 
 ###########################
 ### Spliting on silence ###
